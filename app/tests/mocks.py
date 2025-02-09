@@ -34,7 +34,7 @@ SAMPLE_RULES_JSON = {
         {
             "predicate": "all",
             "conditions": [
-                {"field": "date_received", "predicate": "less_than", "value": "7"}
+                {"field": "date_received", "predicate": "is_less_than", "value": "7"}
             ],
             "actions": [
                 {"action": ActionType.MOVE, "folder": "Old Emails"},
@@ -43,7 +43,11 @@ SAMPLE_RULES_JSON = {
         {
             "predicate": "any",
             "conditions": [
-                {"field": "date_received", "predicate": "greater_than", "value": "1"},
+                {
+                    "field": "date_received",
+                    "predicate": "is_greater_than",
+                    "value": "1",
+                },
                 {"field": "subject", "contains": "Important"},
             ],
             "actions": [

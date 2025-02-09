@@ -265,7 +265,7 @@ class TestEmailProcessor:
         test_rule_dict = {
             "predicate": "all",
             "conditions": [
-                {"field": "date_received", "predicate": "less_than", "value": "5"}
+                {"field": "date_received", "predicate": "is_less_than", "value": "5"}
             ],
             "actions": [],
         }
@@ -280,11 +280,11 @@ class TestEmailProcessor:
         assert email_matches_rule(old_email, test_rule) is True
 
     def test_email_matches_rule_with_date_greater_than(self):
-        """Test rule matching logic for date_received greater_than condition."""
+        """Test rule matching logic for date_received is_greater_than condition."""
         test_rule_dict = {
             "predicate": "all",
             "conditions": [
-                {"field": "date_received", "predicate": "greater_than", "value": "3"}
+                {"field": "date_received", "predicate": "is_greater_than", "value": "3"}
             ],
             "actions": [],
         }

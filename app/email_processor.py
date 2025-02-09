@@ -76,7 +76,7 @@ def process_emails() -> None:
             if condition.field == "date_received":
                 print(
                     f"   - {condition.field} {condition.predicate} "
-                    f"{condition.value} days"
+                    f"{condition.value} day(s)"
                 )
             else:
                 print(f"   - {condition.field} contains '{condition.contains}'")
@@ -109,7 +109,7 @@ def process_emails() -> None:
                     if condition.field == "date_received":
                         print(
                             f"   - {condition.field} {condition.predicate} "
-                            f"{condition.value} days"
+                            f"{condition.value} day(s)"
                         )
                     else:
                         print(f"   - {condition.field} contains '{condition.contains}'")

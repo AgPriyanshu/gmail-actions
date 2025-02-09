@@ -29,9 +29,9 @@ def parse_date_condition(email_date: datetime, condition: RuleCondition) -> bool
     now = datetime.now().astimezone()
     compare_date = now - timedelta(days=int(condition.value))
 
-    if condition.predicate == "less_than":
+    if condition.predicate == "is_less_than":
         return email_date < compare_date
-    elif condition.predicate == "greater_than":
+    elif condition.predicate == "is_greater_than":
         return email_date > compare_date
 
     return False

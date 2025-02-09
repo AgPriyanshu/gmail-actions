@@ -64,7 +64,7 @@
       "conditions": [
         {
           "field": "date_received",
-          "predicate": "less_than",
+          "predicate": "is_less_than",
           "value": "7"
         }
       ],
@@ -76,11 +76,11 @@
       ]
     },
     {
-      "predicate": "any",
+      "predicate": "all",
       "conditions": [
         {
           "field": "date_received",
-          "predicate": "greater_than",
+          "predicate": "is_greater_than",
           "value": "1"
         },
         {
@@ -94,7 +94,7 @@
         },
         {
           "action": "move",
-          "folder": "Immediate Attention"
+          "folder": "Recent Emails"
         }
       ]
     }
