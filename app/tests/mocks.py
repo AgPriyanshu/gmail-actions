@@ -1,5 +1,6 @@
 """Mock data for testing."""
 
+from datetime import datetime
 from typing import Any, Dict
 
 from ..schemas import ActionType
@@ -10,7 +11,7 @@ SAMPLE_EMAIL: Dict[str, Any] = {
     "message_id": "test123",
     "sender": "boss@example.com",
     "subject": "URGENT: Meeting Now",
-    "date": "2024-01-01",
+    "date_received": datetime.now(),
     "snippet": "Please join the meeting",
     "folder": "Inbox",
     "is_read": False,
@@ -27,11 +28,35 @@ SAMPLE_RULES_JSON = {
             ],
             "actions": [
                 {"action": ActionType.MARK_READ},
-                {
-                    "action": ActionType.MOVE,
-                    "folder": "Important/Urgent",
-                },
+                {"action": ActionType.MOVE, "folder": "Important/Urgent"},
             ],
-        }
+        },
+        {
+            "predicate": "all",
+            "conditions": [
+                {"field": "date_received", "predicate": "less_than", "value": "7"}
+            ],
+            "actions": [
+                {"action": ActionType.MOVE, "folder": "Old Emails"},
+            ],
+        },
+        {
+            "predicate": "any",
+            "conditions": [
+                {"field": "date_received", "predicate": "greater_than", "value": "1"},
+                {"field": "subject", "contains": "Important"},
+            ],
+            "actions": [
+                {"action": ActionType.MARK_READ},
+                {"action": ActionType.MOVE, "folder": "Immediate Attention"},
+            ],
+        },
+        {
+            "predicate": "all",
+            "conditions": [{"field": "sender", "contains": "notifications@github.com"}],
+            "actions": [
+                {"action": ActionType.MOVE, "folder": "GitHub"},
+            ],
+        },
     ]
 }

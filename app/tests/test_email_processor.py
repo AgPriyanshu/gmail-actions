@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, timedelta
 from pathlib import Path
 from unittest.mock import patch
 
@@ -36,7 +37,7 @@ class TestEmailProcessor:
                 "msg1",
                 "sender1@test.com",
                 "Test Subject 1",
-                "2024-03-15",
+                (datetime.now() - timedelta(days=3)).strftime("%Y-%m-%d %H:%M:%S"),
                 "Snippet 1",
                 "INBOX",
                 0,
@@ -45,7 +46,7 @@ class TestEmailProcessor:
                 "msg2",
                 "sender2@test.com",
                 "Test Subject 2",
-                "2024-03-16",
+                (datetime.now() - timedelta(days=10)).strftime("%Y-%m-%d %H:%M:%S"),
                 "Snippet 2",
                 "Archive",
                 1,
@@ -54,7 +55,7 @@ class TestEmailProcessor:
                 "msg3",
                 "sender3@test.com",
                 "Test Subject 3",
-                "2024-03-17",
+                (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d %H:%M:%S"),
                 "Snippet 3",
                 "INBOX",
                 0,
@@ -63,7 +64,7 @@ class TestEmailProcessor:
         cursor.executemany(
             """
             INSERT INTO emails
-            (message_id, sender, subject, date, snippet, folder, is_read)
+            (message_id, sender, subject, date_received, snippet, folder, is_read)
             VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
             emails,
@@ -101,7 +102,7 @@ class TestEmailProcessor:
     def test_load_rules(self, sample_rules):
         """Test loading rules from JSON file."""
         loaded_rules = load_rules(sample_rules)
-        assert len(loaded_rules) == 1
+        assert len(loaded_rules) == 4
         assert loaded_rules[0].predicate == PredicateType.ALL.value
         assert len(loaded_rules[0].conditions) == 2
         assert len(loaded_rules[0].actions) == 2
@@ -241,7 +242,7 @@ class TestEmailProcessor:
         cursor.execute(
             """
             INSERT INTO emails
-            (message_id, sender, subject, date, snippet, folder, is_read)
+            (message_id, sender, subject, date_received, snippet, folder, is_read)
             VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
             long_email,
@@ -254,3 +255,42 @@ class TestEmailProcessor:
         # Check if long fields are truncated
         assert "..." in captured.out
         assert len(max(captured.out.split("\n"), key=len)) < 200  # Check line length
+
+    def test_email_matches_rule_with_date_received(self):
+        """Test rule matching logic for date_received conditions."""
+        test_rule_dict = {
+            "predicate": "all",
+            "conditions": [
+                {"field": "date_received", "predicate": "less_than", "value": "5"}
+            ],
+            "actions": [],
+        }
+        test_rule = Rule.model_validate(test_rule_dict)
+
+        recent_email = SAMPLE_EMAIL.copy()
+        recent_email["date_received"] = datetime.now() - timedelta(days=2)
+        assert email_matches_rule(recent_email, test_rule) is False
+
+        old_email = SAMPLE_EMAIL.copy()
+        old_email["date_received"] = datetime.now() - timedelta(days=10)
+        assert email_matches_rule(old_email, test_rule) is True
+
+    def test_email_matches_rule_with_date_greater_than(self):
+        """Test rule matching logic for date_received greater_than condition."""
+        test_rule_dict = {
+            "predicate": "all",
+            "conditions": [
+                {"field": "date_received", "predicate": "greater_than", "value": "3"}
+            ],
+            "actions": [],
+        }
+        test_rule = Rule.model_validate(test_rule_dict)
+
+        old_email = SAMPLE_EMAIL.copy()
+        now = datetime.now().astimezone()
+        old_email["date_received"] = now - timedelta(days=5)
+        assert email_matches_rule(old_email, test_rule) is False
+
+        recent_email = SAMPLE_EMAIL.copy()
+        recent_email["date_received"] = now - timedelta(days=1)
+        assert email_matches_rule(recent_email, test_rule) is True

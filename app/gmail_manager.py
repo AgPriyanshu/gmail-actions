@@ -49,7 +49,7 @@ class GmailManager:
                 flow = InstalledAppFlow.from_client_secrets_file(
                     CREDENTIALS_PATH, GMAIL_SCOPES
                 )
-                credentials = flow.run_local_server(port=0)
+                credentials = flow.run_local_server()
 
             with open(TOKEN_PATH, "wb") as token:
                 pickle.dump(credentials, token)

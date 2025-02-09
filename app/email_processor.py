@@ -1,20 +1,19 @@
 import argparse
-import json
-import os
-from typing import Any, Dict, List, Optional
+import re
+from datetime import datetime
+from typing import List
 
 from tabulate import tabulate
 
-from .constants import DEFAULT_RULES_PATH, DEFAULT_USER
+from .constants import DEFAULT_USER
 from .db.database import init_db
 from .db.queries import (
     get_all_emails,
     insert_email,
-    update_email_folder,
-    update_email_read_status,
 )
 from .gmail_manager import GmailManager
-from .schemas import ActionType, PredicateType, Rule, RuleAction, RuleCondition, Rules
+from .helpers import email_matches_rule, load_rules, perform_actions
+from .schemas import ActionType, Rule
 
 
 def fetch_and_store_emails(user_email: str = DEFAULT_USER) -> None:
@@ -29,6 +28,7 @@ def fetch_and_store_emails(user_email: str = DEFAULT_USER) -> None:
         return
 
     init_db()
+
     for email in email_messages:
         msg_id = email["message_id"]
         sender = email["sender"]
@@ -38,7 +38,10 @@ def fetch_and_store_emails(user_email: str = DEFAULT_USER) -> None:
         folder = email.get("folder", "INBOX")
         is_read = email.get("is_read", False)
 
-        if insert_email(msg_id, sender, subject, date, snippet, folder, is_read):
+        date = re.sub(r"\s*\(UTC\)", "", date)
+        parsed_date = datetime.strptime(date, "%a, %d %b %Y %H:%M:%S %z")
+
+        if insert_email(msg_id, sender, subject, parsed_date, snippet, folder, is_read):
             print("✅ Stored new email:")
             print(f"   From: {sender}")
             print(f"   Subject: {subject}")
@@ -50,70 +53,6 @@ def fetch_and_store_emails(user_email: str = DEFAULT_USER) -> None:
             print("ℹ️  Email already exists:")
             print(f"   Subject: {subject}")
             print("   ----------------------")
-
-
-def load_rules(rules_file: str = DEFAULT_RULES_PATH) -> List[Rule]:
-    """Load processing rules from the JSON file."""
-    if not os.path.exists(rules_file):
-        print(f"No rules file found: {rules_file}")
-        return []
-    with open(rules_file) as f:
-        rules_dict = json.load(f)
-    return Rules.model_validate(rules_dict).rules
-
-
-def email_matches_rule(email: Dict[str, Any], rule: Rule) -> bool:
-    """
-    Determine if an email matches a rule.
-
-    Rule format example:
-      {
-        "predicate": "and",
-        "conditions": [
-            {"field": "subject", "contains": "urgent"},
-            {"field": "sender", "contains": "boss@example.com"}
-        ],
-        "actions": [ ... ]
-      }
-    """
-    predicate: str = rule.predicate
-    conditions: List[RuleCondition] = rule.conditions
-
-    results: List[bool] = []
-    for cond in conditions:
-        field: str = cond.field
-        # Check for a substring match on the specified field.
-        value: Optional[str] = cond.value or cond.contains
-        email_value: str = email.get(field, "")
-        if email_value and value and value.lower() in email_value.lower():
-            results.append(True)
-        else:
-            results.append(False)
-
-    if predicate == PredicateType.ALL.value:
-        return all(results)
-    elif predicate == PredicateType.ANY.value:
-        return any(results)
-    return all(results)
-
-
-def perform_actions(email: dict, actions: List[RuleAction]) -> None:
-    """Perform the specified actions on an email."""
-    for action in actions:
-        if action.action == ActionType.MOVE:
-            if not action.folder:
-                print("No folder specified for move action")
-                continue
-            print(f"Moving email {email['message_id']} to folder '{action.folder}'")
-            update_email_folder(email["message_id"], action.folder)
-
-        elif action.action == ActionType.MARK_READ:
-            print(f"Marking email {email['message_id']} as read")
-            update_email_read_status(email["message_id"], True)
-
-        elif action.action == ActionType.MARK_UNREAD:
-            print(f"Marking email {email['message_id']} as unread")
-            update_email_read_status(email["message_id"], False)
 
 
 def process_emails() -> None:
@@ -134,7 +73,13 @@ def process_emails() -> None:
         print(f"   Predicate: {rule.predicate.upper()}")
         print("   Conditions:")
         for condition in rule.conditions:
-            print(f"   - {condition.field} contains '{condition.contains}'")
+            if condition.field == "date_received":
+                print(
+                    f"   - {condition.field} {condition.predicate} "
+                    f"{condition.value} days"
+                )
+            else:
+                print(f"   - {condition.field} contains '{condition.contains}'")
         print("   Actions:")
         for action in rule.actions:
             if action.action == ActionType.MARK_READ:
@@ -149,7 +94,10 @@ def process_emails() -> None:
     for email in emails:
         subject = email.get("subject", "No Subject")
         sender = email.get("sender", "No Sender")
-        print(f"📨 Checking email: '{subject}' from {sender}")
+        date_received = email.get("date_received", "Unknown Date")
+        print(
+            f"📨 Checking email: '{subject}' from {sender} received on {date_received}"
+        )
 
         for i, rule in enumerate(rules, 1):
             if email_matches_rule(email, rule):
@@ -158,7 +106,13 @@ def process_emails() -> None:
                 print(f"   Subject: {subject}")
                 print("   Rule conditions:")
                 for condition in rule.conditions:
-                    print(f"   - {condition.field} contains '{condition.contains}'")
+                    if condition.field == "date_received":
+                        print(
+                            f"   - {condition.field} {condition.predicate} "
+                            f"{condition.value} days"
+                        )
+                    else:
+                        print(f"   - {condition.field} contains '{condition.contains}'")
                 print("\n   Performing actions:")
                 perform_actions(email, rule.actions)
                 print("   ----------------------")
@@ -189,7 +143,7 @@ def display_emails(limit: int = 10) -> None:
             email["subject"][:40] + "..."
             if email["subject"] and len(email["subject"]) > 40
             else email["subject"],
-            email["date"],
+            email["date_received"],
             email["folder"],
             "✓" if email["is_read"] else "✗",
         ]

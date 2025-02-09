@@ -47,7 +47,7 @@ def init_db(db_name: str = DATABASE_NAME) -> sqlite3.Connection:
             message_id TEXT UNIQUE,
             sender TEXT,
             subject TEXT,
-            date TEXT,
+            date_received DATETIME,
             snippet TEXT,
             folder TEXT DEFAULT 'INBOX',
             is_read BOOLEAN DEFAULT 0

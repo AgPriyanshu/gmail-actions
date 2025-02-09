@@ -9,7 +9,7 @@ class EmailDict(TypedDict, total=False):
         message_id: Gmail's unique message ID
         sender: Email sender address
         subject: Email subject line
-        date: Email sent date
+        date_received: Email sent date
         snippet: Short preview of email content
     """
 
@@ -17,5 +17,5 @@ class EmailDict(TypedDict, total=False):
     message_id: str
     sender: Optional[str]
     subject: Optional[str]
-    date: Optional[str]
+    date_received: Optional[str]
     snippet: Optional[str]

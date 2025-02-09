@@ -5,11 +5,11 @@
       "conditions": [
         {
           "field": "subject",
-          "contains": "Become"
+          "contains": "This"
         },
         {
           "field": "sender",
-          "contains": "boss@example.com"
+          "contains": "info@members.tatastarbucks.net"
         }
       ],
       "actions": [
@@ -56,6 +56,45 @@
         {
           "action": "move",
           "folder": "GitHub"
+        }
+      ]
+    },
+    {
+      "predicate": "all",
+      "conditions": [
+        {
+          "field": "date_received",
+          "predicate": "less_than",
+          "value": "7"
+        }
+      ],
+      "actions": [
+        {
+          "action": "move",
+          "folder": "Old Emails"
+        }
+      ]
+    },
+    {
+      "predicate": "any",
+      "conditions": [
+        {
+          "field": "date_received",
+          "predicate": "greater_than",
+          "value": "1"
+        },
+        {
+          "field": "subject",
+          "contains": "Urgent"
+        }
+      ],
+      "actions": [
+        {
+          "action": "mark_as_read"
+        },
+        {
+          "action": "move",
+          "folder": "Immediate Attention"
         }
       ]
     }

@@ -11,7 +11,7 @@ class EmailModel(BaseModel):
     message_id: str
     sender: Optional[str]
     subject: Optional[str]
-    date: Optional[str]
+    date_received: Optional[str]
     snippet: Optional[str]
     raw: str
     folder: str = "INBOX"  # Default folder
@@ -24,6 +24,7 @@ class RuleCondition(BaseModel):
     field: str
     contains: Optional[str] = None
     value: Optional[str] = None
+    predicate: Optional[str] = None
 
 
 class ActionType(StrEnum):

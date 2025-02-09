@@ -1,15 +1,16 @@
 import sqlite3
-from typing import Any, Dict, List, Optional
+from datetime import datetime
+from typing import Any, Dict, List
 
 from .database import Database
 
 
 def insert_email(
     message_id: str,
-    sender: Optional[str],
-    subject: Optional[str],
-    date: Optional[str],
-    snippet: Optional[str],
+    sender: str,
+    subject: str,
+    date_received: datetime,
+    snippet: str,
     folder: str = "INBOX",
     is_read: bool = False,
 ) -> bool:
@@ -20,14 +21,14 @@ def insert_email(
             cursor.execute(
                 """
                 INSERT INTO emails
-                (message_id, sender, subject, date, snippet, folder, is_read)
+                (message_id, sender, subject, date_received, snippet, folder, is_read)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     message_id,
                     sender,
                     subject,
-                    date,
+                    date_received,
                     snippet,
                     folder,
                     1 if is_read else 0,
@@ -45,7 +46,8 @@ def get_all_emails() -> List[Dict[str, Any]]:
         cursor = conn.cursor()
         cursor.execute(
             """
-            SELECT id, message_id, sender, subject, date, snippet, folder, is_read
+            SELECT id, message_id, sender, subject, date_received, snippet,
+                   folder, is_read
             FROM emails
             """
         )
@@ -56,7 +58,7 @@ def get_all_emails() -> List[Dict[str, Any]]:
                 "message_id": row[1],
                 "sender": row[2],
                 "subject": row[3],
-                "date": row[4],
+                "date_received": datetime.fromisoformat(row[4]),
                 "snippet": row[5],
                 "folder": row[6],
                 "is_read": bool(row[7]),
