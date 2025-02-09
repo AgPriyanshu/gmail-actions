@@ -5,16 +5,20 @@ from unittest.mock import patch
 
 import pytest
 
-from ..db.database import Database, init_db
-from ..email_processor import (
-    Rule,
-    RuleAction,
-    display_emails,
+from app.db.database import Database, init_db
+from app.email_processor import display_emails
+from app.helpers import (
     email_matches_rule,
     load_rules,
     perform_actions,
 )
-from ..schemas import ActionType, PredicateType
+from app.schemas import (
+    ActionType,
+    PredicateType,
+    Rule,
+    RuleAction,
+)
+
 from .mocks import SAMPLE_EMAIL, SAMPLE_RULES_JSON
 
 
@@ -118,8 +122,8 @@ class TestEmailProcessor:
         non_matching_email["subject"] = "Regular meeting"
         assert email_matches_rule(non_matching_email, test_rule) is False
 
-    @patch("app.email_processor.update_email_folder")
-    @patch("app.email_processor.update_email_read_status")
+    @patch("app.helpers.update_email_folder")
+    @patch("app.helpers.update_email_read_status")
     def test_perform_actions(self, mock_update_read, mock_update_folder, capsys):
         """Test action performance with mocked database calls."""
         test_actions = [
@@ -142,7 +146,7 @@ class TestEmailProcessor:
             SAMPLE_EMAIL["message_id"], "Important/Urgent"
         )
 
-    @patch("app.email_processor.update_email_folder")
+    @patch("app.helpers.update_email_folder")
     def test_move_action_without_folder(self, mock_update_folder, capsys):
         """Test move action without specified folder."""
         test_actions = [RuleAction(action=ActionType.MOVE)]
@@ -175,7 +179,7 @@ class TestEmailProcessor:
         regular_email["subject"] = "Regular meeting"
         assert email_matches_rule(regular_email, or_rule) is False
 
-    @patch("app.email_processor.update_email_read_status")
+    @patch("app.helpers.update_email_read_status")
     def test_mark_read_action(self, mock_update_read):
         """Test marking email as read with mocked database call."""
         test_actions = [RuleAction(action=ActionType.MARK_READ)]
@@ -183,7 +187,7 @@ class TestEmailProcessor:
 
         mock_update_read.assert_called_once_with(SAMPLE_EMAIL["message_id"], True)
 
-    @patch("app.email_processor.update_email_folder")
+    @patch("app.helpers.update_email_folder")
     def test_update_folder_action(self, mock_update_folder):
         """Test updating email folder with mocked database call."""
         test_actions = [RuleAction(action=ActionType.MOVE, folder="Archive")]

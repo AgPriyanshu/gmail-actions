@@ -30,7 +30,14 @@ This project is a standalone Python script that integrates with the Gmail API to
   ```bash
   python -m app.email_processor --mode fetch
   ```
+3. **Running Tests**
 
+  To run the test suite using pytest, use the following command:
+  ```bash
+  pytest ./app/tests
+  ```
+
+This will automatically discover and run all test files inside the tests/ directory.
 ## References
 
 For more detailed information, please refer to the [REFERENCES.md](REFERENCES.md) file.
