@@ -1,0 +1,63 @@
+{
+  "rules": [
+    {
+      "predicate": "all",
+      "conditions": [
+        {
+          "field": "subject",
+          "contains": "Become"
+        },
+        {
+          "field": "sender",
+          "contains": "boss@example.com"
+        }
+      ],
+      "actions": [
+        {
+          "action": "mark_as_read"
+        },
+        {
+          "action": "move",
+          "folder": "Important/Urgent"
+        }
+      ]
+    },
+    {
+      "predicate": "any",
+      "conditions": [
+        {
+          "field": "subject",
+          "contains": "Laziness"
+        },
+        {
+          "field": "subject",
+          "contains": "schedule"
+        }
+      ],
+      "actions": [
+        {
+          "action": "mark_as_read"
+        },
+        {
+          "action": "move",
+          "folder": "Meetings"
+        }
+      ]
+    },
+    {
+      "predicate": "all",
+      "conditions": [
+        {
+          "field": "sender",
+          "contains": "notifications@github.com"
+        }
+      ],
+      "actions": [
+        {
+          "action": "move",
+          "folder": "GitHub"
+        }
+      ]
+    }
+  ]
+}
